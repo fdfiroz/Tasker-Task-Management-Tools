@@ -7,6 +7,7 @@ import Register from "../pages/Register"
 import ContactUs from "../pages/ContactUs"
 import DashboardLayout from "../layouts/DashboardLayout"
 import Tasks from "../pages/Tasks"
+import Profile from "../pages/Profile"
 
 const routes = createBrowserRouter([
     {
@@ -33,6 +34,10 @@ const routes = createBrowserRouter([
                 {
                   index: true,
                   element: <Tasks/>,
+                },
+                {
+                  path: 'profile',
+                  element: <Profile />,
                 },
               ]
             }
