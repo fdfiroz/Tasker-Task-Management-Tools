@@ -4,6 +4,9 @@ import App from "../App"
 import Home from "../pages/Home"
 import Login from "../pages/Login"
 import Register from "../pages/Register"
+import ContactUs from "../pages/ContactUs"
+import DashboardLayout from "../layouts/DashboardLayout"
+import Tasks from "../pages/Tasks"
 
 const routes = createBrowserRouter([
     {
@@ -14,11 +17,25 @@ const routes = createBrowserRouter([
             {
                 path: "*",
                 element:<ErrorPage/>,
-              },
-              {
+            },
+            {
                 index: true,
                 element: <Home />,
-              },
+            },
+            {
+              path: '/contact-us',
+              element: <ContactUs />,
+            },
+            {
+              path: '/dashboard',
+              element: <DashboardLayout />,
+              children: [
+                {
+                  index: true,
+                  element: <Tasks/>,
+                },
+              ]
+            }
               
         ]
     },
