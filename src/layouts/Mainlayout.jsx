@@ -1,11 +1,10 @@
 
 import {
   Navbar,
-  MobileNav,
+  Collapse,
   Typography,
   Button,
   IconButton,
-  Card,
 } from "@material-tailwind/react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -127,7 +126,7 @@ const Mainlayout = ({children}) => {
             </IconButton>
           </div>
         </div>
-        <MobileNav open={openNav}>
+        <Collapse open={openNav}>
           {navList}
           <div className="flex items-center gap-x-1">
            <Link to={"/login"}>
@@ -141,7 +140,7 @@ const Mainlayout = ({children}) => {
             </Button>
             </Link>
           </div>
-        </MobileNav>
+        </Collapse>
       </Navbar>
       <div className="mx-auto max-w-screen-2xl py-8">
         {children}
