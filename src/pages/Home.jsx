@@ -9,14 +9,17 @@ import {
 } from "@material-tailwind/react";
 import HeroSection from "../components/Home/HeroSection";
 import FeaturesSection from "../components/Home/FeaturesSection";
+import Newsletter from "../components/Home/Newsletter";
+import Stats from "../components/Home/Stats";
 
 
 const Home = () => {
   return (
     <>
-    <HeroSection></HeroSection>
-    <FeaturesSection></FeaturesSection>
-        
+    <HeroSection/>
+    <FeaturesSection/>
+    <Stats/>
+    <Newsletter/>
     </>
   )
 }
