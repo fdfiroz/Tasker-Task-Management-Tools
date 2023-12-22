@@ -14,12 +14,14 @@ import useAuth from "../hooks/useAuth";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { Helmet } from "react-helmet-async";
+import useAxios from "../hooks/useAxios";
 
 
 const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const {createUser, handleUpdateProfile} = useAuth()
+  const axios = useAxios()
+  const {createUser, handleUpdateProfile, user} = useAuth()
   const [name, setName] = useState('')
   const [photoURL, setPhotoURL] = useState('')
   const [email, setEmail] = useState('')
@@ -47,11 +49,20 @@ const Register = () => {
     try {
       await createUser(email, password);
       await handleUpdateProfile(name, photoURL)
-      .then(() => {
+      
+        console.log(user)
+        if(user){
+              const emailVerified = user?.emailVerified;
+              const createdAt = user?.metadata?.creationTime;
+              const uid = user?.uid;
+              const lastSignInTime = user?.metadata?.lastSignInTime;
+              const newUser = { name, email, photoURL, uid, lastSignInTime, emailVerified, createdAt };
+              axios.post("/user", newUser)
+        }
         toast.success('User Created', { id: toastId });
         
         navigate(location.state? location.state: '/');
-      })
+    
     } catch (error) {
       console.log(error);
       toast.error(error.message, { id: toastId });

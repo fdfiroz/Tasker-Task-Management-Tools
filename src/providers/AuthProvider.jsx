@@ -54,7 +54,7 @@ const AuthProvider = ({ children }) => {
             if (currentUser) {
                 axios.post('/auth/access-token', loggedUser)
                     .then(res => {
-                        console.log('token response', res.data);
+                        console.log('token response', res?.data);
                         
                     })
             }
