@@ -213,7 +213,7 @@ const Mainlayout = ({children}) => {
           }
         </Collapse>
       </Navbar>
-      <div className="mx-auto max-w-screen-2xl py-8">
+      <div className="mx-auto max-w-screen-2xl pt-8">
         {children}
       </div>
     </div>

@@ -33,7 +33,7 @@ const TABS = [
   },
 ];
  
-const TABLE_HEAD = ["Member", "Function", "Status", "Employed", ""];
+const TABLE_HEAD = ["To Do", "Function", "Status", "Employed", ""];
  
 const TABLE_ROWS = [
   {
