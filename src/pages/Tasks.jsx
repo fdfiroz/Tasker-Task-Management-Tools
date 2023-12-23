@@ -122,7 +122,7 @@ const Tasks = () => {
           </div>
         </div>
       </DndProvider>
-      <AddTask open={addTaskOpen} setOpen={setAddTaskOpen} />
+      <AddTask open={addTaskOpen} setOpen={setAddTaskOpen} toDoRefetch={toDoRefetch} />
     </>
   );
 };
@@ -192,6 +192,7 @@ const Section = ({status,tasks,toDos, ongoing,completed,handleRemove, axios, toD
               task={task}
               handleRemove={handleRemove}
               statusChange={statusChange}
+              toDoRefetch={toDoRefetch}
             ></TaskCard>
           ))}
         {tasksToMap?.length === 0 && (

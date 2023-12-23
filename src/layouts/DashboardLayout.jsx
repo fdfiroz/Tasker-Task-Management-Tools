@@ -33,9 +33,9 @@ const DashboardLayout = () => {
     
     },
     {
-      label: "Settings",
-      value: "settings",
-      link: "/dashboard/settings",
+      label: "Contact Us",
+      value: "ContactUs",
+      link: "/contact-us",
       icon: Cog6ToothIcon,
     },
   ];

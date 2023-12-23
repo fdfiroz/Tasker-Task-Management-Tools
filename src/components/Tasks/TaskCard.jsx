@@ -5,7 +5,7 @@ import { MdEditSquare } from "react-icons/md";
 import { Button, Card, CardBody, IconButton, Typography } from "@material-tailwind/react";
 import UpdateTask from "./UpdateTask";
 import { useState } from "react";
-const TaskCard = ({ task, handleRemove,  statusChange }) => {
+const TaskCard = ({ task, handleRemove,  statusChange, toDoRefetch }) => {
     const [updateTaskOpen, setUpdateTaskOpen] = useState(false);
     const handleUpdate = ()=>{
         setUpdateTaskOpen(!updateTaskOpen)
@@ -43,20 +43,20 @@ const TaskCard = ({ task, handleRemove,  statusChange }) => {
             </div>
             <Typography variant="h5" >{task.title}</Typography>
             <Typography variant="paragraph">{task.description}</Typography>
-            <div className="flex justify-start items-center gap-2">
+            <div className="flex justify-center gap-2">
               <Typography variant="small" className={`${task.status !== 'completed' && remaining <= 2 && `text-red-600`} ${task.status !== 'completed' && remaining < 4 && remaining > 2 && `text-yellow-600`} ${task.status !== 'completed' && remaining > 4 && `text-green-600`} ${task.status === 'completed' && 'text-black'}`}>
-                Deadline: {task.dueDate} (
+                DueDate: {task.dueDate} (
                 {remaining > 0 ? remaining : -(remaining)}{" "}
                 {`${remaining >= 0 && remaining <= 1 ? 'day left' : ''}`}{`${remaining > 1 ? 'days left' : ''}`}{`${remaining < 0 && remaining >= -1 ? 'day passed' : ''}`}{`${remaining <-1 ? 'days passed' : ''}`}){" "}
               </Typography>
               {
-                task.priority === 'Low' && <Typography variant="small">Priority: <span className="text-green-600">{task.priority}</span></Typography> 
+                task.priority === 'Low' && <Typography variant="small" className="inline-flex gap-1">Priority: <span className="text-green-600">{task.priority}</span></Typography> 
               }
               {
-                task.priority === 'Medium' && <Typography variant="small">Priority: <span className="text-yellow-600">{task.priority}</span></Typography> 
+                task.priority === 'Medium' && <Typography variant="small" className="inline-flex gap-1">Priority:<span className="text-yellow-600">{task.priority}</span></Typography> 
               }
               {
-                task.priority === 'High' && <Typography variant="small"> Priority: <span className="text-red-600">{task.priority}</span></Typography> 
+                task.priority === 'High' && <Typography variant="small" className="inline-flex gap-1"> Priority: <span className="text-red-600">{task.priority}</span></Typography> 
               }
               
             </div>
@@ -67,7 +67,7 @@ const TaskCard = ({ task, handleRemove,  statusChange }) => {
             </div>
           </CardBody>
         </Card>
-        <UpdateTask open={updateTaskOpen} setOpen={setUpdateTaskOpen} task={task}/>
+        <UpdateTask open={updateTaskOpen} setOpen={setUpdateTaskOpen} task={task} toDoRefetch={toDoRefetch}/>
         </>
 
       );

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Button,
   Dialog,
@@ -11,9 +11,35 @@ import {
   Option,
   Select,
 } from "@material-tailwind/react";
+import { useForm } from "react-hook-form";
+import useAuth from "../../hooks/useAuth";
+import useAxios from "../../hooks/useAxios";
+import toast from "react-hot-toast";
 
 
-const AddTask = ({open, setOpen}) => {
+const AddTask = ({open, setOpen, toDoRefetch}) => {
+  const {user} = useAuth();
+  const axios = useAxios();
+  const { register, handleSubmit, reset } = useForm();
+
+const [status, setStatus] = useState("");
+const [priority, setPriority] = useState("");
+
+  const onSubmit = async (data) => {
+    data.assignedTo = user?.email;
+    data.status = status;
+    data.priority = priority;
+    const res = await axios.post("/create-new-task", data);
+    if (res.data.acknowledged) {
+      toDoRefetch();
+      reset();
+      setOpen(!open)
+      toast.success('Task Added');
+    }
+    console.log(data)
+    
+
+  };
   return (
     <>
         <Dialog
@@ -26,7 +52,7 @@ const AddTask = ({open, setOpen}) => {
         }}
       >
         <div className="flex items-center justify-between">
-        <DialogHeader className="flex flex-col items-start">
+        <DialogHeader className="flex flex-col items-start ">
         <Typography className="mb-1" variant="h4">
               Add Task
             </Typography>
@@ -45,21 +71,21 @@ const AddTask = ({open, setOpen}) => {
             />
           </svg>
         </div>
-        <form >
-        <DialogBody>
+        <form onSubmit={handleSubmit(onSubmit)} >
+        <DialogBody >
         <Typography className="mb-10 -mt-7 " color="gray" variant="lead">
             Add a new task to your board.
           </Typography>
           <div className="grid gap-6">
-            <Input type="datetime-local" label="Due Date" />
-            <Input label="Task Name" />
-            <Textarea label="Description" />
-            <Select defaultValue={"Todo"} size="md" label="Status">
-                <Option value="Todo" >Todo</Option>
-                <Option value="In-Progress">In-Progress</Option>
-                <Option value="Completed">Completed</Option>
+            <Input name="dueDate" type="date" label="Due Date"  {...register("dueDate")}/>
+            <Input name="title" label="Task Name"  {...register("title")}/>
+            <Textarea name="description" label="Description" {...register("description")}/>
+            <Select name="status" size="md" label="Status" onChange={(e)=>setStatus(e)}>
+                <Option value="incomplete" >Incomplete</Option>
+                <Option value="ongoing">Ongoing</Option>
+                <Option value="completed">Completed</Option>
             </Select>
-            <Select size="md" label="Priority">
+            <Select name="priority" size="md" label="Priority" onChange={(e)=>setPriority(e)}>
                 <Option value="High" >High</Option>
                 <Option value="Medium">Medium</Option>
                 <Option value="Low">Low</Option>
@@ -67,16 +93,14 @@ const AddTask = ({open, setOpen}) => {
           </div>
         </DialogBody>
         <DialogFooter>
+         
+          <Button type="submit"  variant="gradient" color="green" className="mr-1">
+            <span>Confirm</span>
+          </Button>
           <Button
-            variant="text"
-            color="red"
-            onClick={()=>setOpen(!open)}
-            className="mr-1"
+            variant="text" color="red" onClick={()=>setOpen(!open)} 
           >
             <span>Cancel</span>
-          </Button>
-          <Button variant="gradient" color="green" onClick={()=>setOpen(!open)}>
-            <span>Confirm</span>
           </Button>
         </DialogFooter>
         </form>
