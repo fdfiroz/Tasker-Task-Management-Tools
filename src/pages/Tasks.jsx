@@ -1,239 +1,217 @@
-import {
-  MagnifyingGlassIcon,
-  ChevronUpDownIcon,
-} from "@heroicons/react/24/outline";
-import { PencilIcon, UserPlusIcon } from "@heroicons/react/24/solid";
-import {
-  Card,
-  CardHeader,
-  Typography,
-  Button,
-  CardBody,
-  Chip,
-  CardFooter,
-  Avatar,
-  IconButton,
-  Tooltip,
-} from "@material-tailwind/react";
+import { useEffect, useState } from "react";
+import useAuth from "../hooks/useAuth";
+import { Link, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import TaskCard from "../components/Tasks/TaskCard";
+import { DndProvider, useDrop } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import { TouchBackend } from "react-dnd-touch-backend";
+import useAxios from "../hooks/useAxios";
+import toast from "react-hot-toast";
+import { Button, Card, Chip, List, ListItem, Typography } from "@material-tailwind/react";
 import AddTask from "../components/Tasks/AddTask";
-import { useState } from "react";
+import Swal from "sweetalert2";
 
-const TABS = [
-  {
-    label: "All",
-    value: "all",
-  },
-  {
-    label: "Monitored",
-    value: "monitored",
-  },
-  {
-    label: "Unmonitored",
-    value: "unmonitored",
-  },
-];
- 
-const TABLE_HEAD = ["To Do", "Function", "Status", "Employed", ""];
- 
-const TABLE_ROWS = [
-  {
-    img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-3.jpg",
-    name: "John Michael",
-    email: "john@creative-tim.com",
-    job: "Manager",
-    org: "Organization",
-    online: true,
-    date: "23/04/18",
-  },
-  {
-    img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-2.jpg",
-    name: "Alexa Liras",
-    email: "alexa@creative-tim.com",
-    job: "Programator",
-    org: "Developer",
-    online: false,
-    date: "23/04/18",
-  },
-  {
-    img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-1.jpg",
-    name: "Laurent Perrier",
-    email: "laurent@creative-tim.com",
-    job: "Executive",
-    org: "Projects",
-    online: false,
-    date: "19/09/17",
-  },
-  {
-    img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-4.jpg",
-    name: "Michael Levi",
-    email: "michael@creative-tim.com",
-    job: "Programator",
-    org: "Developer",
-    online: true,
-    date: "24/12/08",
-  },
-  {
-    img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-5.jpg",
-    name: "Richard Gran",
-    email: "richard@creative-tim.com",
-    job: "Manager",
-    org: "Executive",
-    online: false,
-    date: "04/10/21",
-  },
-];
- 
 const Tasks = () => {
+  const { user, loading } = useAuth();
+  const axios = useAxios();
+  const isMobile = window.innerWidth < 780;
+  const [toDos, setToDos] = useState([]);
+  const [ongoing, setOngoing] = useState([]);
+  const [completed, setCompleted] = useState([]);
+  
   const [addTaskOpen, setAddTaskOpen] = useState(false);
   const handelAddTask = () => {
     setAddTaskOpen(!addTaskOpen)
   }
+  
+  const { data: toDoList, refetch: toDoRefetch } = useQuery({
+    queryKey: ["allToDoTasks", user?.email],
+    enabled: !loading,
+    queryFn: async () => {
+      const data = await axios.get(
+        `/all-to-do-tasks?email=${user?.email}`);
+      return data.data;
+    },
+  });
+
+  useEffect(() => {
+    const filteredToDos = toDoList?.filter(
+      (task) => task.status === "incomplete"
+    );
+    const filteredOngoing = toDoList?.filter(
+      (task) => task.status === "ongoing"
+    );
+    const filteredCompleted = toDoList?.filter(
+      (task) => task.status === "completed"
+    );
+
+    setToDos(filteredToDos);
+    setOngoing(filteredOngoing);
+    setCompleted(filteredCompleted);
+  }, [toDoList]);
+  const handleRemove = async (id) => {
+    Swal.fire({
+      title: "Do you want to Delete Task?",
+      showDenyButton: true,
+      confirmButtonText: "Delete Now",
+      denyButtonText: `Don't Delete`
+    }).then((result) => {
+      /* Read more about isConfirmed, isDenied below */
+      if (result.isConfirmed) {
+        axios.delete(`/delete-task/${id}`).then((res) => {
+      if (res.data.deletedCount > 0) {
+        toast.success("Task Deleted");
+        toDoRefetch();
+      }
+    });
+      } else if (result.isDenied) {
+        toast.error("Task are not Deleted")
+      }
+    });
+
+   
+  };
+
+  const statuses = ["incomplete", "ongoing", "completed"];
+  const statusChange = (id, newStatus) => {
+    axios
+      .put(`/update-task-status/${id}`, { status: newStatus })
+      .then(async (res) => {
+        if (res.data.modifiedCount > 0) {
+          const taskResponse = await axios.get(`/view-task/${id}`);
+          const {dueDate} = taskResponse.data;
+          const remaining = Math.ceil(
+            (new Date(dueDate).getTime() - new Date().getTime()) /
+              (1000 * 60 * 60 * 24)
+          )
+          toast.success(`${newStatus === 'incomplete' ? `Task moved to To-Do List` : ``} ${newStatus === 'ongoing' ? `Task moved to Ongoing List` : ``} ${newStatus === 'completed' ? `Task moved to Complete List` : ``}. Deadline: ${remaining > 0 ? remaining : -(remaining)} ${remaining >= 0 && remaining <= 1 ? 'day left' : ''}${remaining > 1 ? 'days left' : ''}${remaining < 0 && remaining >= -1 ? 'day passed' : ''}${remaining <-1 ? 'days passed' : ''}`)
+          toDoRefetch();
+        }
+      });
+  };
   return (
     <>
-    <Typography variant="h3" className="text-center">Tasks</Typography>
-    <Card className="h-full w-full">
-      <CardHeader floated={false} shadow={false} className="rounded-none">
-        <div className="mb-8 flex items-center justify-between gap-8">
-          <div>
-            <Typography variant="h5" color="blue-gray">
-              Task list
-            </Typography>
-            <Typography color="gray" className="mt-1 font-normal">
-              See your all task
-            </Typography>
+      <DndProvider backend={isMobile ? TouchBackend : HTML5Backend}>
+        <div className="max-w-[1440px] mx-auto px-10 mb-10">
+          <div className="py-2  w-full flex items-center justify-between px-5 shadow-xl my-3 rounded-lg">
+            <p className=" font-bold text-2xl">Tasks</p>
+            <div className="flex items-center gap-4">
+              <Button size="md" variant="gradient" className="rounded-full" onClick={handelAddTask}>
+                + Add Task
+              </Button>
+            </div>
           </div>
-          <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-            <Button variant="outlined" size="sm">
-              view all
-            </Button>
-            <Button onClick={handelAddTask} className="flex items-center gap-3" size="sm">
-              <UserPlusIcon strokeWidth={2} className="h-4 w-4" /> Add Task
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardBody className="overflow-scroll px-0">
-        <table className="mt-4 w-full min-w-max table-auto text-left">
-          <thead>
-            <tr>
-              {TABLE_HEAD.map((head, index) => (
-                <th
-                  key={head}
-                  className="cursor-pointer border-y border-blue-gray-100 bg-blue-gray-50/50 p-4 transition-colors hover:bg-blue-gray-50"
-                >
-                  <Typography
-                    variant="small"
-                    color="blue-gray"
-                    className="flex items-center justify-between gap-2 font-normal leading-none opacity-70"
-                  >
-                    {head}{" "}
-                    {index !== TABLE_HEAD.length - 1 && (
-                      <ChevronUpDownIcon strokeWidth={2} className="h-4 w-4" />
-                    )}
-                  </Typography>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {TABLE_ROWS.map(
-              ({ img, name, email, job, org, online, date }, index) => {
-                const isLast = index === TABLE_ROWS.length - 1;
-                const classes = isLast
-                  ? "p-4"
-                  : "p-4 border-b border-blue-gray-50";
- 
-                return (
-                  <tr key={name}>
-                    <td className={classes}>
-                      <div className="flex items-center gap-3">
-                        <Avatar src={img} alt={name} size="sm" />
-                        <div className="flex flex-col">
-                          <Typography
-                            variant="small"
-                            color="blue-gray"
-                            className="font-normal"
-                          >
-                            {name}
-                          </Typography>
-                          <Typography
-                            variant="small"
-                            color="blue-gray"
-                            className="font-normal opacity-70"
-                          >
-                            {email}
-                          </Typography>
-                        </div>
-                      </div>
-                    </td>
-                    <td className={classes}>
-                      <div className="flex flex-col">
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          {job}
-                        </Typography>
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal opacity-70"
-                        >
-                          {org}
-                        </Typography>
-                      </div>
-                    </td>
-                    <td className={classes}>
-                      <div className="w-max">
-                        <Chip
-                          variant="ghost"
-                          size="sm"
-                          value={online ? "online" : "offline"}
-                          color={online ? "green" : "blue-gray"}
-                        />
-                      </div>
-                    </td>
-                    <td className={classes}>
-                      <Typography
-                        variant="small"
-                        color="blue-gray"
-                        className="font-normal"
-                      >
-                        {date}
-                      </Typography>
-                    </td>
-                    <td className={classes}>
-                      <Tooltip content="Edit User">
-                        <IconButton variant="text">
-                          <PencilIcon className="h-4 w-4" />
-                        </IconButton>
-                      </Tooltip>
-                    </td>
-                  </tr>
-                );
-              },
-            )}
-          </tbody>
-        </table>
-      </CardBody>
-      {/* <CardFooter className="flex items-center justify-between border-t border-blue-gray-50 p-4">
-        <Typography variant="small" color="blue-gray" className="font-normal">
-          Page 1 of 10
-        </Typography>
-        <div className="flex gap-2">
-          <Button variant="outlined" size="sm">
-            Previous
-          </Button>
-          <Button variant="outlined" size="sm">
-            Next
-          </Button>
-        </div>
-      </CardFooter> */}
-    </Card>
-    <AddTask open={addTaskOpen} setOpen={setAddTaskOpen} />
-    </>
-  )
-}
 
-export default Tasks
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {statuses.map((status, index) => (
+              <Section
+                key={index}
+                status={status}
+                tasks={toDoList}
+                toDos={toDos}
+                ongoing={ongoing}
+                completed={completed}
+                handleRemove={handleRemove}
+                axios={axios}
+                toDoList={toDoList}
+                toDoRefetch={toDoRefetch}
+                statusChange={statusChange}
+              ></Section>
+            ))}
+          </div>
+        </div>
+      </DndProvider>
+      <AddTask open={addTaskOpen} setOpen={setAddTaskOpen} />
+    </>
+  );
+};
+
+export default Tasks;
+
+const Section = ({status,tasks,toDos, ongoing,completed,handleRemove, axios, toDoList, toDoRefetch, statusChange}) => {
+  const [{ isOver }, drop] = useDrop(() => ({
+    accept: "task",
+    drop: (item) => addItemToSection(item.id),
+    collect: (monitor) => ({
+      isOver: !!monitor.isOver(),
+    }),
+  }));
+
+  let text = "todo";
+  let bg;
+  let textColor;
+  let tasksToMap = toDos;
+  if (status === "incomplete") {
+    text = "To-Do";
+    bg = 'bg-gradient-to-r from-[#4E65FF] to-[#A1C4FD]'
+    textColor = 'text-white'
+    tasksToMap = toDos;
+  }
+  if (status === "ongoing") {
+    text = "Ongoing";
+    bg = 'bg-gradient-to-r from-[#FF61D2] to-[#FE9090]'
+    textColor = 'text-white'
+    tasksToMap = ongoing;
+  }
+  if (status === "completed") {
+    text = "Completed";
+    bg = 'bg-gradient-to-r from-[#02AABD] to-[#00CDAC]'
+    textColor = 'text-white'
+    tasksToMap = completed;
+  }
+  const addItemToSection = (id) => {
+    axios
+      .put(`/update-task-status/${id}`, { status: status })
+      .then(async (res) => {
+        if (res.data.modifiedCount > 0) {
+          const taskResponse = await axios.get(`/view-task/${id}`);
+          const {dueDate} = taskResponse.data;
+          const remaining = Math.ceil(
+            (new Date(dueDate).getTime() - new Date().getTime()) /
+              (1000 * 60 * 60 * 24)
+          )
+          toast.success(`${status === 'incomplete' ? `Task moved to To-Do List` : ``} ${status === 'ongoing' ? `Task moved to Ongoing List` : ``} ${status === 'completed' ? `Task moved to Completed List` : ``}. Deadline: ${remaining > 0 ? remaining : -(remaining)} ${remaining >= 0 && remaining <= 1 ? 'day left' : ''}${remaining > 1 ? 'days left' : ''}${remaining < 0 && remaining >= -1 ? 'day passed' : ''}${remaining <-1 ? 'days passed' : ''}`)
+          toDoRefetch();
+        }
+      });
+  };
+  return (
+    <div
+      ref={drop}
+      className={`w-full min-h-[300px] shadow-xl pb-5 rounded-lg ${
+        isOver ? "bg-violet-100" : ""
+      }`}
+    >
+      <Header text={text} bg={bg} textColor={textColor} count={tasksToMap?.length}></Header>
+      <Card className={`flex flex-col justify-center items-center gap-6 mt-5 h`}>
+        {tasksToMap?.length > 0 &&
+          tasksToMap?.map((task) => (
+            <TaskCard
+              key={task._id}
+              task={task}
+              handleRemove={handleRemove}
+              statusChange={statusChange}
+            ></TaskCard>
+          ))}
+        {tasksToMap?.length === 0 && (
+          <div className="flex w-full min-h-[200px] justify-center items-center">
+            <img src={"https://img.icons8.com/ios/50/000000/select-none.png"} />
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+};
+
+const Header = ({ text, count, bg, textColor }) => {
+  return (
+    <List className={`text-center font-medium py-2 rounded-lg  ${bg} ${textColor} text-xl`}>
+      <ListItem   className="flex justify-center items-center gap-3">
+        <Typography variant="h5">{text}</Typography>
+        <Chip variant="gradient" value={count||0} className="rounded-full" />
+
+      </ListItem>
+    </List>
+  );
+};
